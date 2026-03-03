@@ -52,7 +52,19 @@
       };
 
       // =============================================================
-      // BASE DE DATOS DE ESCENAS (Rutas actualizadas)
+      // COMPONENTE: LOGO SUELO (Tomado de tu proyecto FabLab)
+      // =============================================================
+      AFRAME.registerComponent('rotate-with-camera', {
+        tick: function () {
+          var camera = this.el.sceneEl.camera; 
+          if (!camera) return;
+          var camRot = document.querySelector('[camera]').getAttribute('rotation');
+          this.el.setAttribute('rotation', {x: 0, y: camRot.y, z: 0});
+        }
+      });
+
+      // =============================================================
+      // BASE DE DATOS DE ESCENAS
       // =============================================================
       const escenas = {
         'entrada': { 
@@ -458,11 +470,10 @@
         <img id="img-butacas" src="imagenes/butacas actualizado.jpg">
         <img id="img-biblioteca" src="imagenes/biblioteca.jpg">
         <img id="img-danza" src="imagenes/danza.jpg">
-        
         <img id="img-edificioD" src="imagenes/edificioD.jpg">
-        
         <img id="img-edificioA" src="imagenes/edificioA.jpeg">
         <img id="img-cafeteria" src="imagenes/cafeteria.jpeg">
+        <img id="img-logo" src="imagenes/esan.png">
 
         <a-asset-item id="modelo-flecha" src="imagenes/Flecha.glb"></a-asset-item>
       </a-assets>
@@ -475,6 +486,11 @@
       <a-entity id="menu-3d" visible="false"></a-entity>
 
       <a-entity id="rig" position="0 1.6 0" rotation="0 0 0">
+        
+        <a-entity rotate-with-camera position="0 -1.59 0">
+            <a-circle src="#img-logo" radius="1.5" position="0 0 0" rotation="-90 0 0" material="transparent: true; opacity: 1" shader="flat"></a-circle>
+        </a-entity>
+
         <a-camera id="camara-principal" fov="80" wasd-controls-enabled="false" look-controls="reverseMouseDrag: true">
             <a-entity id="overlay-fade" geometry="primitive: sphere; radius: 0.1" material="color: #000; transparent: true; opacity: 0; side: back" position="0 0 0"></a-entity>
         </a-camera>
