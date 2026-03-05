@@ -164,12 +164,12 @@
                 cieloFondo.removeEventListener('materialtextureloaded', revelarEscena);
                 contenedorFlechas.setAttribute('visible', 'true');
                 
-                // Si entra a básquet, bajamos el entorno de físicas y reseteamos la pelota
+		// Si entra a básquet, bajamos el entorno de físicas y reseteamos la pelota
                 if (nombreEscena === 'basquet') {
                     fisicaBasquet.setAttribute('position', '0 0 0');
                     if (pelota.components['dynamic-body']) {
-                        // Resetear posición física
-                        pelota.components['dynamic-body'].body.position.set(0, 2, -2);
+                        // Resetear posición física a la altura del pecho y cerca de la mano
+                        pelota.components['dynamic-body'].body.position.set(0, 1.5, -1.2);
                         pelota.components['dynamic-body'].body.velocity.set(0,0,0);
                         pelota.components['dynamic-body'].body.angularVelocity.set(0,0,0);
                     }
@@ -402,21 +402,21 @@
 
       <a-entity id="entorno-fisicas-basquet" position="0 1000 0">
           
-          <a-plane static-body position="0 -1.5 0" rotation="-90 0 0" width="50" height="50" visible="false"></a-plane>
+          <a-plane static-body position="0 0 0" rotation="-90 0 0" width="50" height="50" visible="false"></a-plane>
 
           <a-box static-body position="0 4 -12" width="2.5" height="1.5" depth="0.1" visible="false"></a-box>
 
           <a-sphere 
               id="pelota-interactiva" 
               dynamic-body="mass: 1; bounce: 0.75" 
-              position="0 2 -2" 
+              position="0 1.5 -1.2" 
               radius="0.3" 
               color="#D95C14" 
               class="clickable" 
               impulso-fisico>
           </a-sphere>
 
-          <a-text value="Dispara la pelota" position="0 2.5 -2" align="center" color="#FFFFFF" scale="0.8 0.8 0.8" look-at="#camara-principal"></a-text>
+          <a-text value="Dispara la pelota" position="0 2.1 -1.2" align="center" color="#FFFFFF" scale="0.8 0.8 0.8" look-at="#camara-principal"></a-text>
 
       </a-entity>
 
