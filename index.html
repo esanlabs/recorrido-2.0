@@ -5,7 +5,10 @@
     <title>Tour ESAN 360 - Experiencia VR Premium</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
+    <script src="https://unpkg.com/super-hands@^3.0.3/dist/super-hands.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-extras@0.1.2/dist/aframe-physics-extras.min.js"></script>
 
     <style>
       #pantalla-carga {
@@ -49,22 +52,38 @@
       });
 
       // =============================================================
-      // COMPONENTE FÍSICO: LANZAMIENTO REALISTA
+      // COMPONENTE: DETECTOR DE CANASTA (MARCADOR)
       // =============================================================
-      AFRAME.registerComponent('impulso-fisico', {
+      AFRAME.registerComponent('sistema-puntos', {
         init: function () {
-          var el = this.el;
+          this.puntos = 0;
+          this.puedeAnotar = true;
+          this.pelota = document.querySelector('#pelota-interactiva');
+          this.marcador = document.querySelector('#texto-marcador');
           
-          el.addEventListener('click', function () {
-            // Aplicamos un impulso físico (fuerza) a la pelota. 
-            // Los valores (x, y, z) representan la dirección y fuerza del tiro.
-            // Z negativo empuja hacia adelante, Y positivo hacia arriba.
-            var fuerza = new CANNON.Vec3(0, 7, -10); 
-            var puntoContacto = new CANNON.Vec3(0, 0, 0); // Centro de la pelota
+          // Posición central del aro para calcular si encestaste
+          this.posAro = new THREE.Vector3(0, 3.5, -11.5); 
+        },
+        tick: function () {
+          if (!this.pelota || !this.puedeAnotar) return;
+          var posPelota = this.pelota.object3D.position;
+          var distancia = posPelota.distanceTo(this.posAro);
+
+          if (distancia < 0.8) {
+            this.puntos++;
+            this.marcador.setAttribute('value', 'PUNTOS: ' + this.puntos);
+            this.pelota.setAttribute('color', '#00FF00');
+            this.puedeAnotar = false; 
             
-            // Accedemos al cuerpo físico nativo (Cannon.js) de la entidad
-            el.components['dynamic-body'].body.applyImpulse(fuerza, puntoContacto);
-          });
+            setTimeout(() => {
+              this.pelota.setAttribute('color', '#D95C14');
+              this.puedeAnotar = true;
+            }, 1500);
+          }
+
+          if (posPelota.y < -5 || posPelota.distanceTo(new THREE.Vector3(0,0,0)) > 30) {
+             resetearPelota();
+          }
         }
       });
 
@@ -144,14 +163,12 @@
         var contenedorFlechas = document.querySelector('#flechas-container');
         var cieloFondo = document.querySelector('#cielo-fondo'); 
         var overlayFade = document.querySelector('#overlay-fade');
-        var fisicaBasquet = document.querySelector('#entorno-fisicas-basquet');
-        var pelota = document.querySelector('#pelota-interactiva');
+        var btnLanzarMinijuego = document.querySelector('#btn-lanzar-minijuego');
         var duracionFade = 500; 
 
         contenedorFlechas.setAttribute('visible', 'false');
-        
-        // Escondemos y desactivamos las físicas aislando la cancha de básquet
-        fisicaBasquet.setAttribute('position', '0 1000 0'); // Lo mandamos muy lejos
+        btnLanzarMinijuego.setAttribute('visible', 'false');
+        btnLanzarMinijuego.classList.remove('clickable');
         
         overlayFade.setAttribute('animation', { property: 'material.opacity', from: 0, to: 1, dur: duracionFade, easing: 'linear' });
 
@@ -164,22 +181,53 @@
                 cieloFondo.removeEventListener('materialtextureloaded', revelarEscena);
                 contenedorFlechas.setAttribute('visible', 'true');
                 
-		// Si entra a básquet, bajamos el entorno de físicas y reseteamos la pelota
                 if (nombreEscena === 'basquet') {
-                    fisicaBasquet.setAttribute('position', '0 0 0');
-                    if (pelota.components['dynamic-body']) {
-                        // Resetear posición física a la altura del pecho y cerca de la mano
-                        pelota.components['dynamic-body'].body.position.set(0, 1.5, -1.2);
-                        pelota.components['dynamic-body'].body.velocity.set(0,0,0);
-                        pelota.components['dynamic-body'].body.angularVelocity.set(0,0,0);
-                    }
+                    btnLanzarMinijuego.setAttribute('visible', 'true');
+                    btnLanzarMinijuego.classList.add('clickable');
                 }
 
                 overlayFade.setAttribute('animation', { property: 'material.opacity', from: 1, to: 0, dur: duracionFade, easing: 'linear' });
             }
-
             cieloFondo.addEventListener('materialtextureloaded', revelarEscena);
         }, duracionFade + 50);
+      }
+
+      function resetearPelota() {
+          var pelota = document.querySelector('#pelota-interactiva');
+          if (pelota && pelota.components['dynamic-body']) {
+              pelota.components['dynamic-body'].body.velocity.set(0,0,0);
+              pelota.components['dynamic-body'].body.angularVelocity.set(0,0,0);
+              // Spawn frente a ti a la altura del pecho
+              pelota.components['dynamic-body'].body.position.set(0, 1.2, -2); 
+          }
+      }
+
+      function activarMinijuego() {
+          document.querySelector('#flechas-container').setAttribute('visible', 'false');
+          document.querySelector('#btn-lanzar-minijuego').setAttribute('visible', 'false');
+          document.querySelector('#btn-lanzar-minijuego').classList.remove('clickable');
+
+          document.querySelector('#entorno-fisicas-basquet').setAttribute('visible', 'true');
+
+          var btnVolver = document.querySelector('#btn-volver-tour');
+          btnVolver.classList.add('clickable');
+          
+          var btnReset = document.querySelector('#btn-reset-balon');
+          btnReset.classList.add('clickable');
+
+          resetearPelota();
+      }
+
+      function desactivarMinijuego() {
+          document.querySelector('#entorno-fisicas-basquet').setAttribute('visible', 'false');
+          document.querySelector('#btn-volver-tour').classList.remove('clickable');
+          document.querySelector('#btn-reset-balon').classList.remove('clickable');
+
+          document.querySelector('#flechas-container').setAttribute('visible', 'true');
+          
+          var btnLanzarMinijuego = document.querySelector('#btn-lanzar-minijuego');
+          btnLanzarMinijuego.setAttribute('visible', 'true');
+          btnLanzarMinijuego.classList.add('clickable');
       }
 
       function generarFlechas(listaFlechas) {
@@ -347,6 +395,10 @@
         });
 
         document.getElementById('btn-menu-2d').addEventListener('click', toggleMenu3D);
+        
+        document.querySelector('#btn-lanzar-minijuego').addEventListener('click', activarMinijuego);
+        document.querySelector('#btn-volver-tour').addEventListener('click', desactivarMinijuego);
+        document.querySelector('#btn-reset-balon').addEventListener('click', resetearPelota);
       };
 
       function ocultarLoader() {
@@ -368,7 +420,7 @@
     <button id="btn-menu-2d">Abrir Menú de Navegación</button>
 
     <a-scene 
-      physics="debug: true; gravity: -9.8"
+      physics="debug: false; gravity: -9.8"
       renderer="antialias: true; colorManagement: true; sortObjects: true;"
       cursor="rayOrigin: mouse" 
       raycaster="objects: .clickable">
@@ -390,7 +442,6 @@
         <img id="img-edificioA" src="imagenes/edificioA.jpeg">
         <img id="img-cafeteria" src="imagenes/cafeteria.jpeg">
         <img id="img-logo" src="imagenes/esan.png">
-
         <a-asset-item id="modelo-flecha" src="imagenes/Flecha.glb"></a-asset-item>
       </a-assets>
 
@@ -400,24 +451,37 @@
       <a-entity id="flechas-container"></a-entity>
       <a-entity id="menu-3d" visible="false"></a-entity>
 
-      <a-entity id="entorno-fisicas-basquet" position="0 1000 0">
-          
-          <a-plane static-body position="0 0 0" rotation="-90 0 0" width="50" height="50" visible="false"></a-plane>
+      <a-plane id="btn-lanzar-minijuego" position="3 1.5 -8" look-at="#camara-principal" width="3" height="1" color="#E3173E" visible="false">
+          <a-text value="¡Juega un rato!" align="center" color="#FFFFFF" scale="1.5 1.5 1.5"></a-text>
+      </a-plane>
 
-          <a-box static-body position="0 4 -12" width="2.5" height="1.5" depth="0.1" visible="false"></a-box>
+      <a-entity id="entorno-fisicas-basquet" position="0 0 0" visible="false" sistema-puntos>
+          
+          <a-plane static-body position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#222222" opacity="0.8"></a-plane>
+
+          <a-box static-body position="0 4 -12" width="2.5" height="1.5" depth="0.1" color="#FF0000" opacity="0.6"></a-box>
+
+          <a-text id="texto-marcador" value="PUNTOS: 0" position="0 6 -12" align="center" color="#FFD700" scale="3 3 3"></a-text>
 
           <a-sphere 
               id="pelota-interactiva" 
+              class="grabbable"
+              hoverable grabbable stretchable draggable droppable
               dynamic-body="mass: 1; bounce: 0.75" 
-              position="0 1.5 -1.2" 
+              position="0 1.5 -2" 
               radius="0.3" 
-              color="#D95C14" 
-              class="clickable" 
-              impulso-fisico>
+              color="#D95C14">
           </a-sphere>
 
-          <a-text value="Dispara la pelota" position="0 2.1 -1.2" align="center" color="#FFFFFF" scale="0.8 0.8 0.8" look-at="#camara-principal"></a-text>
+          <a-plane id="btn-volver-tour" position="-3 1.5 -5" look-at="#camara-principal" width="2.5" height="0.8" color="#333333">
+              <a-text value="Volver al Tour" align="center" color="#FFFFFF"></a-text>
+          </a-plane>
 
+          <a-plane id="btn-reset-balon" position="3 1.5 -5" look-at="#camara-principal" width="2.5" height="0.8" color="#00BFFF">
+              <a-text value="Resetear Balon" align="center" color="#FFFFFF"></a-text>
+          </a-plane>
+
+          <a-light type="point" intensity="1.2" position="0 5 0"></a-light>
       </a-entity>
 
       <a-entity id="rig" position="0 1.6 0" rotation="0 0 0">
@@ -429,8 +493,8 @@
             <a-entity id="overlay-fade" geometry="primitive: sphere; radius: 0.1" material="color: #000; transparent: true; opacity: 0; side: back" position="0 0 0"></a-entity>
         </a-camera>
 
-        <a-entity laser-controls="hand: right" raycaster="objects: .clickable; lineColor: #00BFFF; lineOpacity: 0.8" vr-controller-listener></a-entity>
-        <a-entity laser-controls="hand: left" raycaster="objects: .clickable; lineColor: #00BFFF; lineOpacity: 0.8" vr-controller-listener></a-entity>
+        <a-entity laser-controls="hand: right" raycaster="objects: .clickable" sphere-collider="objects: .grabbable; radius: 0.1" super-hands vr-controller-listener></a-entity>
+        <a-entity laser-controls="hand: left" raycaster="objects: .clickable" sphere-collider="objects: .grabbable; radius: 0.1" super-hands vr-controller-listener></a-entity>
       </a-entity>
 
     </a-scene>
