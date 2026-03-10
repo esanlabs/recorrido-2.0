@@ -5,7 +5,6 @@
     <title>Tour ESAN 360 - Experiencia VR Premium</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
 
     <style>
@@ -142,12 +141,14 @@
           }
         }
       });
+
       // =============================================================
-      // COMPONENTE PARA HOTSPOTS INFORMATIVOS (CLICK PARA ABRIR/CERRAR)
+      // COMPONENTE MEJORADO PARA HOTSPOTS INFORMATIVOS
       // =============================================================
       AFRAME.registerComponent('hotspot-info', {
         schema: {
-          target: {type: 'string'} // ID del panel que va a mostrar
+          target: {type: 'string'}, // ID del panel a mostrar
+          action: {type: 'string', default: 'toggle'} // 'toggle' o 'close'
         },
         init: function () {
           var el = this.el;
@@ -155,31 +156,54 @@
           
           el.addEventListener('click', function (evt) {
             var panel = document.querySelector(data.target);
-            if (panel) {
-              // Alternar visibilidad
-              var isVisible = panel.getAttribute('visible');
-              panel.setAttribute('visible', !isVisible);
-              
-              // Evitar que el clic se propague si hacemos clic en el botón de cerrar
-              if (evt.target.classList.contains('close-btn')) {
-                  panel.setAttribute('visible', false);
-              }
+            if (!panel) return;
+            
+            // Detener propagación para evitar clics múltiples simultáneos
+            evt.stopPropagation();
+
+            if (data.action === 'close') {
+                panel.setAttribute('visible', 'false');
+                panel.classList.remove('panel-activo');
+            } else {
+                // Abre el panel
+                panel.setAttribute('visible', 'true');
+                panel.classList.add('panel-activo');
+                
+                // Opcional: Hacer que el panel aparezca frente al usuario al abrirse
+                var cam3D = document.querySelector('#camara-principal').getObject3D('camera');
+                if (cam3D) {
+                    var posCamara = new THREE.Vector3();
+                    cam3D.getWorldPosition(posCamara);
+                    var vectorDireccion = new THREE.Vector3();
+                    cam3D.getWorldDirection(vectorDireccion);
+                    vectorDireccion.multiplyScalar(3.5); // Distancia del panel
+                    var nuevaPosicion = posCamara.clone().add(vectorDireccion);
+                    // Mantenemos una altura cómoda
+                    nuevaPosicion.y = 1.5; 
+                    panel.setAttribute('position', nuevaPosicion);
+                }
             }
           });
           
-          // Efecto hover simple para el ícono de info
+          // Hover
           el.addEventListener('mouseenter', function () {
-            el.setAttribute('scale', '1.2 1.2 1.2');
+              if (data.action !== 'close') {
+                  el.setAttribute('scale', '1.1 1.1 1.1');
+              } else {
+                  el.setAttribute('color', '#FF5555'); // Iluminar botón X
+              }
           });
           el.addEventListener('mouseleave', function () {
-            el.setAttribute('scale', '1 1 1');
+              if (data.action !== 'close') {
+                  el.setAttribute('scale', '0.8 0.8 0.8');
+              } else {
+                  el.setAttribute('color', '#FF0000');
+              }
           });
         }
       });
 
-      // =============================================================
-      // MAPA DE NAVEGACIÓN REPARADO (Jardín actualizado)
-      // =============================================================
+      // Mapa de Navegación
       const escenas = {
         'entrada': { 
             imagen: '#img-entrada', rotacionSky: '0 90 0', 
@@ -278,7 +302,7 @@
             flechas: [ 
                 { target: 'ecoesan', position: '10 -1 -10', rotation: '0 -45 0' }, 
                 { target: 'edificioD', position: '20 -1 0.36', rotation: '0 120 0' },
-                { target: 'capilla', position: '-10 -1 -10', rotation: '0 45 0' } // Añadido para poder ir a la capilla
+                { target: 'capilla', position: '-10 -1 -10', rotation: '0 45 0' } 
             ] 
         },
         'datalab': {
@@ -381,13 +405,18 @@
         btnLanzarMinijuego.setAttribute('visible', 'false');
         btnLanzarMinijuego.classList.remove('clickable');
         
-        // --- NUEVO: Ocultar todos los grupos de hotspots ---
+        // --- Ocultar Hotspots al cambiar de escena ---
         var todosHotspots = document.querySelectorAll('.grupo-hotspots');
         todosHotspots.forEach(function(grupo) {
             grupo.setAttribute('visible', 'false');
-            // Cerramos los paneles abiertos por si acaso
-            var paneles = grupo.querySelectorAll('[id^="panel-info"]');
-            paneles.forEach(p => p.setAttribute('visible', 'false'));
+            var paneles = grupo.querySelectorAll('.panel-activo');
+            paneles.forEach(p => {
+                p.setAttribute('visible', 'false');
+                p.classList.remove('panel-activo');
+            });
+            // Ocultar íconos
+            var iconos = grupo.querySelectorAll('.icono-hotspot');
+            iconos.forEach(i => i.classList.remove('clickable'));
         });
         
         overlayFade.setAttribute('animation', { property: 'material.opacity', from: 0, to: 1, dur: duracionFade, easing: 'linear' });
@@ -416,10 +445,13 @@
                     btnLanzarMinijuego.classList.add('clickable');
                 }
                 
-                // --- NUEVO: Mostrar el grupo de hotspots si existe para esta escena ---
+                // --- Mostrar Hotspots si es la escena correcta ---
                 var hotspotActual = document.querySelector('#hotspots-' + nombreEscena);
                 if (hotspotActual) {
                     hotspotActual.setAttribute('visible', 'true');
+                    // Reactivar íconos
+                    var iconos = hotspotActual.querySelectorAll('.icono-hotspot');
+                    iconos.forEach(i => i.classList.add('clickable'));
                 }
 
                 overlayFade.setAttribute('animation', { property: 'material.opacity', from: 1, to: 0, dur: duracionFade, easing: 'linear' });
@@ -722,7 +754,8 @@
         <img id="img-logo" src="imagenes/esan.png">
         
         <img id="img-flecha-plana" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='rgba(255,255,255,0.8)' stroke='%23E3173E' stroke-width='6'/><path d='M30 60 L50 40 L70 60' fill='none' stroke='%23E3173E' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-	<img id="img-info-icon" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23FF0000'/><text x='50' y='75' font-family='Arial' font-size='65' font-weight='bold' fill='white' text-anchor='middle'>i</text></svg>">
+        
+        <img id="img-info-icon" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23FF0000'/><text x='50' y='75' font-family='Arial' font-size='65' font-weight='bold' fill='white' text-anchor='middle'>i</text></svg>">
       </a-assets>
 
       <a-sky id="cielo-fondo" radius="500" rotation="0 -90 0"></a-sky>
@@ -734,24 +767,27 @@
       <a-entity id="hotspots-jardin" class="grupo-hotspots" visible="false">
           <a-image 
               src="#img-info-icon" 
-              position="11.99 3 -0.20" scale="0.8 0.8 0.8" 
+              position="-3 1.5 -5" 
+              scale="0.8 0.8 0.8" 
               look-at="[camera]" 
-              class="clickable" 
-              hotspot-info="target: #panel-info-jardin">
+              class="clickable icono-hotspot" 
+              hotspot-info="target: #panel-info-jardin; action: toggle">
           </a-image>
 
-          <a-entity id="panel-info-jardin" position="-3 1.5 -4.9" visible="false" look-at="[camera]">
-              <a-plane color="#FFFFFF" opacity="0.95" width="3" height="2" position="0 0 0"></a-plane>
+          <a-entity id="panel-info-jardin" visible="false" look-at="[camera]">
+              <a-plane color="#FFFFFF" opacity="0.95" width="4" height="2.5" position="0 0 0"></a-plane>
               
-              <a-text value="JARDIN CENTRAL" color="#E3173E" align="center" width="5" position="0 0.7 0.01" font="roboto"></a-text>
+              <a-text value="JARDIN CENTRAL" color="#E3173E" align="center" width="6" position="0 0.9 0.01"></a-text>
               
-              <a-text value="Este es el area principal de descanso para los alumnos.\n\nAquí puedes relajarte, conversar o estudiar al aire libre.\n\n¡Disfruta del entorno verde!" color="#333333" align="left" width="2.5" position="-1.2 0.1 0.01" wrap-count="30"></a-text>
+              <a-text value="Este es el area principal de descanso para los alumnos de ESAN.\n\nAquí puedes relajarte, conversar o estudiar al aire libre rodeado de naturaleza.\n\n¡Disfruta del entorno verde y mantenlo limpio!" 
+                      color="#333333" align="center" width="3.5" position="0 0.1 0.01" wrap-count="35"></a-text>
               
-              <a-plane class="clickable close-btn" color="#FF0000" width="0.4" height="0.4" position="1.3 0.8 0.02" hotspot-info="target: #panel-info-jardin">
-                  <a-text value="X" color="#FFFFFF" align="center" width="5" position="0 0 0.01"></a-text>
+              <a-plane class="clickable close-btn" color="#FF0000" width="0.5" height="0.5" position="1.7 1.0 0.02" hotspot-info="target: #panel-info-jardin; action: close">
+                  <a-text value="X" color="#FFFFFF" align="center" width="6" position="0 0 0.01"></a-text>
               </a-plane>
           </a-entity>
       </a-entity>
+
 
       <a-plane id="btn-lanzar-minijuego" position="3 1.5 -8" look-at="[camera]" width="3" height="1" color="#E3173E" visible="false">
           <a-text value="¡Juega un rato!" align="center" color="#FFFFFF" scale="1.5 1.5 1.5"></a-text>
