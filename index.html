@@ -5,6 +5,7 @@
     <title>Tour ESAN 360 - Experiencia VR Premium</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
 
     <style>
@@ -143,12 +144,34 @@
       });
 
       // =============================================================
-      // COMPONENTE MEJORADO PARA HOTSPOTS INFORMATIVOS
+      // NUEVO COMPONENTE: SEGUIMIENTO DE MIRADA (HUD FLOTANTE)
+      // =============================================================
+      AFRAME.registerComponent('smooth-follow', {
+        tick: function () {
+          // Si el panel está cerrado, no calculamos nada para ahorrar recursos
+          if (this.el.getAttribute('visible') === false) return;
+          
+          var cam = document.querySelector('#camara-principal').object3D;
+          
+          // Calculamos el punto destino: 3.5 metros frente a la cámara
+          var targetPos = new THREE.Vector3(0, 0, -3.5);
+          targetPos.applyMatrix4(cam.matrixWorld);
+          
+          // Lerp hace que el panel "persiga" la mirada suavemente en lugar de pegarse bruscamente
+          this.el.object3D.position.lerp(targetPos, 0.08);
+          
+          // Obligamos al panel a mirar siempre directo a la cámara para evitar deformaciones
+          this.el.object3D.lookAt(cam.position);
+        }
+      });
+
+      // =============================================================
+      // COMPONENTE HOTSPOT: LÓGICA DE APERTURA MEJORADA
       // =============================================================
       AFRAME.registerComponent('hotspot-info', {
         schema: {
-          target: {type: 'string'}, // ID del panel a mostrar
-          action: {type: 'string', default: 'toggle'} // 'toggle' o 'close'
+          target: {type: 'string'}, 
+          action: {type: 'string', default: 'toggle'} 
         },
         init: function () {
           var el = this.el;
@@ -158,37 +181,28 @@
             var panel = document.querySelector(data.target);
             if (!panel) return;
             
-            // Detener propagación para evitar clics múltiples simultáneos
-            evt.stopPropagation();
+            evt.stopPropagation(); // Evita clics dobles
 
             if (data.action === 'close') {
                 panel.setAttribute('visible', 'false');
                 panel.classList.remove('panel-activo');
             } else {
-                // Abre el panel
                 panel.setAttribute('visible', 'true');
                 panel.classList.add('panel-activo');
                 
-                // Opcional: Hacer que el panel aparezca frente al usuario al abrirse
-                var cam3D = document.querySelector('#camara-principal').getObject3D('camera');
-                if (cam3D) {
-                    var posCamara = new THREE.Vector3();
-                    cam3D.getWorldPosition(posCamara);
-                    var vectorDireccion = new THREE.Vector3();
-                    cam3D.getWorldDirection(vectorDireccion);
-                    vectorDireccion.multiplyScalar(3.5); // Distancia del panel
-                    var nuevaPosicion = posCamara.clone().add(vectorDireccion);
-                    // Mantenemos una altura cómoda
-                    nuevaPosicion.y = 1.5; 
-                    panel.setAttribute('position', nuevaPosicion);
-                }
+                // MAGIA: Al abrirlo, lo teletransportamos instantáneamente frente al usuario
+                // para que el smooth-follow no lo traiga volando desde muy lejos
+                var cam = document.querySelector('#camara-principal').object3D;
+                var startPos = new THREE.Vector3(0, 0, -3.5);
+                startPos.applyMatrix4(cam.matrixWorld);
+                panel.object3D.position.copy(startPos);
+                panel.object3D.lookAt(cam.position);
             }
           });
           
-          // Hover
           el.addEventListener('mouseenter', function () {
               if (data.action !== 'close') {
-                  el.setAttribute('scale', '1.1 1.1 1.1');
+                  el.setAttribute('scale', '0.9 0.9 0.9'); // Animación sutil del ícono 'i'
               } else {
                   el.setAttribute('color', '#FF5555'); // Iluminar botón X
               }
@@ -203,7 +217,6 @@
         }
       });
 
-      // Mapa de Navegación
       const escenas = {
         'entrada': { 
             imagen: '#img-entrada', rotacionSky: '0 90 0', 
@@ -414,7 +427,6 @@
                 p.setAttribute('visible', 'false');
                 p.classList.remove('panel-activo');
             });
-            // Ocultar íconos
             var iconos = grupo.querySelectorAll('.icono-hotspot');
             iconos.forEach(i => i.classList.remove('clickable'));
         });
@@ -445,11 +457,10 @@
                     btnLanzarMinijuego.classList.add('clickable');
                 }
                 
-                // --- Mostrar Hotspots si es la escena correcta ---
+                // --- Mostrar Hotspots de la escena actual ---
                 var hotspotActual = document.querySelector('#hotspots-' + nombreEscena);
                 if (hotspotActual) {
                     hotspotActual.setAttribute('visible', 'true');
-                    // Reactivar íconos
                     var iconos = hotspotActual.querySelectorAll('.icono-hotspot');
                     iconos.forEach(i => i.classList.add('clickable'));
                 }
@@ -774,16 +785,16 @@
               hotspot-info="target: #panel-info-jardin; action: toggle">
           </a-image>
 
-          <a-entity id="panel-info-jardin" visible="false" look-at="[camera]">
-              <a-plane color="#FFFFFF" opacity="0.95" width="4" height="2.5" position="0 0 0"></a-plane>
+          <a-entity id="panel-info-jardin" visible="false" smooth-follow>
+              <a-plane color="#FFFFFF" opacity="0.95" width="4" height="2.8" position="0 0 0"></a-plane>
               
-              <a-text value="JARDIN CENTRAL" color="#E3173E" align="center" width="6" position="0 0.9 0.01"></a-text>
+              <a-text value="JARDIN CENTRAL" color="#E3173E" align="center" width="7" position="0 1.1 0.01"></a-text>
               
               <a-text value="Este es el area principal de descanso para los alumnos de ESAN.\n\nAquí puedes relajarte, conversar o estudiar al aire libre rodeado de naturaleza.\n\n¡Disfruta del entorno verde y mantenlo limpio!" 
-                      color="#333333" align="center" width="3.5" position="0 0.1 0.01" wrap-count="35"></a-text>
+                      color="#333333" align="center" width="4" position="0 0 0.01" wrap-count="35"></a-text>
               
-              <a-plane class="clickable close-btn" color="#FF0000" width="0.5" height="0.5" position="1.7 1.0 0.02" hotspot-info="target: #panel-info-jardin; action: close">
-                  <a-text value="X" color="#FFFFFF" align="center" width="6" position="0 0 0.01"></a-text>
+              <a-plane class="clickable close-btn" color="#FF0000" width="0.4" height="0.4" position="1.7 1.1 0.02" hotspot-info="target: #panel-info-jardin; action: close">
+                  <a-text value="X" color="#FFFFFF" align="center" width="5" position="0 0 0.01"></a-text>
               </a-plane>
           </a-entity>
       </a-entity>
