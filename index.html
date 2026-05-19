@@ -6,6 +6,7 @@
     <title>Tour ESAN 360 - Experiencia VR Premium</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-troika-text/dist/aframe-troika-text.min.js"></script>
 
     <script
         src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
@@ -326,8 +327,9 @@
                     var bgPlane = panel.querySelector('a-plane:not(.close-btn)');
                     if (!bgPlane) return;
                     var w = parseFloat(bgPlane.getAttribute('width') || 4);
-                    var h = parseFloat(bgPlane.getAttribute('height') || 3);
                     bgPlane.parentNode.removeChild(bgPlane);
+
+                    var PAD_V = 0.22, GAP = 0.14;
 
                     function mkPlane(color, width, height, px, py, pz, opacity, transparent) {
                         var p = document.createElement('a-plane');
@@ -341,9 +343,24 @@
                         return p;
                     }
 
-                    panel.appendChild(mkPlane('#000000', (w + 0.30).toFixed(2), (h + 0.30).toFixed(2), '0.10', '-0.10', '-0.05', '0.30', true));
-                    panel.appendChild(mkPlane('#E3173E', (w + 0.16).toFixed(2), (h + 0.16).toFixed(2), '0', '0', '-0.02', '1', false));
-                    panel.appendChild(mkPlane('#FFFFFF', w, h, '0', '0', '-0.01', '1', false));
+                    function mkTroika(value, color, fontSize, maxW) {
+                        var e = document.createElement('a-entity');
+                        e.setAttribute('troika-text', {
+                            value: value, color: color,
+                            fontSize: fontSize, maxWidth: maxW,
+                            textAlign: 'center', anchorX: 'center', anchorY: 'top'
+                        });
+                        return e;
+                    }
+
+                    function getTxtH(el) {
+                        var comp = el.components && el.components['troika-text'];
+                        if (!comp || !comp.troikaTextMesh || !comp.troikaTextMesh.textRenderInfo) return null;
+                        var bb = comp.troikaTextMesh.textRenderInfo.blockBounds;
+                        if (!bb) return null;
+                        return Array.isArray(bb) ? Math.abs(bb[3] - bb[1])
+                                                 : Math.abs((bb.top || 0) - (bb.bottom || 0));
+                    }
 
                     var texts = Array.from(panel.querySelectorAll('a-text')).filter(function (t) {
                         var par = t.parentElement;
@@ -354,24 +371,44 @@
                         return true;
                     });
 
+                    var titleEl = null, descEl = null;
                     if (texts[0]) {
-                        texts[0].setAttribute('color', '#E3173E');
-                        texts[0].setAttribute('width', '3.6');
-                        texts[0].setAttribute('wrap-count', '22');
-                        texts[0].setAttribute('align', 'center');
-                        texts[0].setAttribute('position', '0 ' + (h / 2 - 0.28).toFixed(2) + ' 0.06');
+                        titleEl = mkTroika(texts[0].getAttribute('value') || '', '#E3173E', 0.22, w - 0.4);
+                        panel.appendChild(titleEl);
+                        texts[0].parentNode.removeChild(texts[0]);
                     }
-                    for (var i = 1; i < texts.length; i++) {
-                        texts[i].setAttribute('position', '0 ' + (h / 2 - 0.84).toFixed(2) + ' 0.06');
-                        texts[i].setAttribute('align', 'center');
-                        texts[i].setAttribute('width', (w - 0.4).toFixed(2));
+                    if (texts[1]) {
+                        descEl = mkTroika(texts[1].getAttribute('value') || '', '#333333', 0.20, w - 0.4);
+                        panel.appendChild(descEl);
+                        texts[1].parentNode.removeChild(texts[1]);
                     }
 
-                    var closeBtn = panel.querySelector('.close-btn');
-                    if (closeBtn) {
-                        closeBtn.setAttribute('position',
-                            (w / 2 + 0.10).toFixed(2) + ' ' + (h / 2 + 0.10).toFixed(2) + ' 0.04');
+                    var attempts = 0;
+                    function build() {
+                        var th = titleEl ? getTxtH(titleEl) : 0;
+                        var dh = descEl  ? getTxtH(descEl)  : 0;
+                        if (attempts++ < 300 && ((titleEl && th === null) || (descEl && dh === null))) {
+                            requestAnimationFrame(build); return;
+                        }
+                        th = th || (titleEl ? 0.34 : 0);
+                        dh = dh || (descEl  ? 0.24 : 0);
+
+                        var contentH = th + (dh > 0 ? GAP + dh : 0);
+                        var h = contentH + PAD_V * 2;
+                        var titleY = h / 2 - PAD_V;
+
+                        if (titleEl) titleEl.setAttribute('position', '0 ' + titleY.toFixed(3) + ' 0.06');
+                        if (descEl)  descEl.setAttribute('position',  '0 ' + (titleY - th - GAP).toFixed(3) + ' 0.06');
+
+                        panel.appendChild(mkPlane('#000000', (w+0.30).toFixed(2), (h+0.30).toFixed(2), '0.10','-0.10','-0.05','0.30',true));
+                        panel.appendChild(mkPlane('#E3173E', (w+0.16).toFixed(2), (h+0.16).toFixed(2), '0','0','-0.02','1',false));
+                        panel.appendChild(mkPlane('#FFFFFF', w, h.toFixed(2), '0','0','-0.01','1',false));
+
+                        var closeBtn = panel.querySelector('.close-btn');
+                        if (closeBtn) closeBtn.setAttribute('position',
+                            (w/2+0.10).toFixed(2) + ' ' + (h/2+0.10).toFixed(2) + ' 0.04');
                     }
+                    requestAnimationFrame(build);
                 }, 0);
             }
         });
