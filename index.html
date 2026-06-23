@@ -101,6 +101,89 @@
             z-index: 9999; cursor: pointer;
             border: 1px solid #00FF88;
         }
+
+        /* ── 2D Info Card ── */
+        :root {
+            --esan-red: #E3173E;
+            --radius-card: 18px;
+            --shadow-card: 0 24px 64px rgba(0,0,0,0.45);
+        }
+        #card-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            opacity: 0; pointer-events: none;
+            transition: opacity .25s ease;
+        }
+        #card-backdrop.visible { opacity: 1; pointer-events: all; }
+        #info-card-2d {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -44%) scale(0.94);
+            width: min(420px, 92vw);
+            background: #fff;
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            z-index: 2001;
+            opacity: 0; pointer-events: none;
+            transition: opacity .28s ease, transform .28s cubic-bezier(.34,1.56,.64,1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #info-card-2d.visible {
+            opacity: 1; pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .ic-img-wrap {
+            position: relative;
+            width: 100%; height: 180px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #E3173E 0%, #7a0020 100%);
+        }
+        .ic-img-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover; object-position: center;
+            display: block;
+            filter: brightness(0.80);
+        }
+        .ic-close {
+            position: absolute; top: 12px; right: 12px;
+            width: 34px; height: 34px;
+            background: rgba(0,0,0,0.55);
+            border: none; border-radius: 50%;
+            color: #fff; font-size: 18px; line-height: 1;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: background .18s;
+            z-index: 10;
+        }
+        .ic-close:hover { background: var(--esan-red); }
+        .ic-body { padding: 20px 24px 26px; }
+        .ic-scene-tag {
+            display: inline-block;
+            background: #fde8ec; color: var(--esan-red);
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 3px 10px; border-radius: 20px;
+            margin-bottom: 12px;
+        }
+        .ic-title {
+            font-size: 17px; font-weight: 700;
+            color: var(--esan-red);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin: 0 0 12px; line-height: 1.3;
+        }
+        .ic-divider {
+            height: 3px;
+            background: linear-gradient(90deg, var(--esan-red) 0%, transparent 100%);
+            border-radius: 2px; margin-bottom: 14px;
+        }
+        .ic-desc {
+            font-size: 13.5px; color: #696A6D;
+            line-height: 1.65; margin: 0;
+        }
     </style>
 
     <script>
@@ -1165,6 +1248,9 @@
                 console.log("%c NUEVA COORDENADA CAPTURADA", "color: #E3173E; font-size: 16px; font-weight: bold;");
                 console.log(codigoGenerado);
             });
+
+            document.getElementById('ic-close-btn').addEventListener('click', hideCard2D);
+            document.getElementById('card-backdrop').addEventListener('click', hideCard2D);
         };
 
         var _marcosAplicados = false;
@@ -1200,6 +1286,55 @@
                 img.src = src;
             });
         }
+
+        /* ── Datos para las 2D info cards ── */
+        window.cardData2D = {
+            'panel-info-entrada': {
+                title: 'ENTRADA PRINCIPAL ESAN',
+                desc: 'Bienvenidos a una de las instituciones de educación superior en negocios más prestigiosas de América Latina.',
+                image: 'imagenes/entrada esan.jpg',
+                scene: 'ENTRADA PRINCIPAL'
+            }
+        };
+
+        function showCard2D(title, desc, imageSrc, sceneTag) {
+            document.getElementById('ic-title').textContent = title;
+            document.getElementById('ic-desc').textContent = desc;
+            document.getElementById('ic-scene-tag').textContent = (sceneTag || 'ESAN').toUpperCase();
+            var img = document.getElementById('ic-img');
+            if (imageSrc) {
+                img.src = imageSrc;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+            document.getElementById('info-card-2d').classList.add('visible');
+            document.getElementById('card-backdrop').classList.add('visible');
+        }
+
+        function hideCard2D() {
+            document.getElementById('info-card-2d').classList.remove('visible');
+            document.getElementById('card-backdrop').classList.remove('visible');
+        }
+
+        AFRAME.registerComponent('card-2d-trigger', {
+            schema: { panel: { type: 'string' } },
+            init: function () {
+                var panelId = this.data.panel.replace(/^#/, '');
+                var el = this.el;
+                el.addEventListener('click', function () {
+                    if (_isDragging) return;
+                    var data = window.cardData2D[panelId];
+                    if (data) showCard2D(data.title, data.desc, data.image, data.scene);
+                });
+                el.addEventListener('mouseenter', function () {
+                    el.setAttribute('scale', '0.9 0.9 0.9');
+                });
+                el.addEventListener('mouseleave', function () {
+                    el.setAttribute('scale', '0.8 0.8 0.8');
+                });
+            }
+        });
     </script>
 </head>
 
@@ -1210,6 +1345,20 @@
     </div>
 
     <button id="btn-menu-2d">Abrir Menu de Navegacion</button>
+
+    <div id="card-backdrop"></div>
+    <div id="info-card-2d">
+        <div class="ic-img-wrap">
+            <img id="ic-img" src="" alt="" style="display:none">
+            <button class="ic-close" id="ic-close-btn">&#10005;</button>
+        </div>
+        <div class="ic-body">
+            <span class="ic-scene-tag" id="ic-scene-tag"></span>
+            <h2 class="ic-title" id="ic-title"></h2>
+            <div class="ic-divider"></div>
+            <p class="ic-desc" id="ic-desc"></p>
+        </div>
+    </div>
 
     <a-scene renderer="antialias: true; colorManagement: true; sortObjects: true;" cursor="rayOrigin: mouse"
         raycaster="objects: .clickable">
