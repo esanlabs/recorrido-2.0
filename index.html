@@ -312,6 +312,22 @@
             }
         });
 
+        AFRAME.registerGeometry('rounded-rect-top', {
+            schema: { width: { default: 1 }, height: { default: 1 }, radius: { default: 0.05 } },
+            init: function (data) {
+                var shape = new THREE.Shape();
+                var w = data.width / 2, h = data.height / 2, r = Math.min(data.radius, w, h);
+                shape.moveTo(-w, -h);
+                shape.lineTo(w, -h);
+                shape.lineTo(w, h - r);
+                shape.quadraticCurveTo(w, h, w - r, h);
+                shape.lineTo(-w + r, h);
+                shape.quadraticCurveTo(-w, h, -w, h - r);
+                shape.lineTo(-w, -h);
+                this.geometry = new THREE.ShapeGeometry(shape, 8);
+            }
+        });
+
         AFRAME.registerComponent('rotate-with-camera', {
             init: function () {
                 this._camEl = null;
@@ -454,16 +470,35 @@
                         return true;
                     });
 
+                    var titleTextValue = texts[0] ? (texts[0].getAttribute('value') || '') : '';
                     var titleEl = null, descEl = null;
                     if (texts[0]) {
-                        titleEl = mkTroika(texts[0].getAttribute('value') || '', '#E3173E', 0.22, w - 0.4);
+                        titleEl = mkTroika(titleTextValue, '#E3173E', 0.22, w - 0.4);
                         panel.appendChild(titleEl);
                         texts[0].parentNode.removeChild(texts[0]);
                     }
                     if (texts[1]) {
-                        descEl = mkTroika(texts[1].getAttribute('value') || '', '#333333', 0.20, w - 0.4);
+                        descEl = mkTroika(texts[1].getAttribute('value') || '', '#555555', 0.185, w - 0.5);
                         panel.appendChild(descEl);
                         texts[1].parentNode.removeChild(texts[1]);
+                    }
+
+                    var imgSrc    = panel.getAttribute('data-card-img');
+                    var isPremium = panel.getAttribute('data-premium') === 'true';
+                    var IMG_H = 1.5;
+                    var imgEl = null;
+                    if (imgSrc) {
+                        if (isPremium) {
+                            imgEl = document.createElement('a-entity');
+                            imgEl.setAttribute('geometry', 'primitive: rounded-rect-top; width: ' + w.toFixed(2) + '; height: ' + IMG_H.toFixed(2) + '; radius: 0.12');
+                            imgEl.setAttribute('material', { src: imgSrc, shader: 'flat' });
+                        } else {
+                            imgEl = document.createElement('a-plane');
+                            imgEl.setAttribute('width', w.toFixed(2));
+                            imgEl.setAttribute('height', IMG_H.toFixed(2));
+                            imgEl.setAttribute('src', imgSrc);
+                            imgEl.setAttribute('shader', 'flat');
+                        }
                     }
 
                     var attempts = 0;
@@ -476,20 +511,99 @@
                         th = th || (titleEl ? 0.34 : 0);
                         dh = dh || (descEl  ? 0.24 : 0);
 
-                        var contentH = th + (dh > 0 ? GAP + dh : 0);
-                        var h = contentH + PAD_V * 2;
-                        var titleY = h / 2 - PAD_V;
+                        if (isPremium && imgEl) {
+                            /* ── PREMIUM CARD (imagen + badge + divider) ── */
+                            var BG = 0.16, BH = 0.21, DG = 0.12, DH = 0.026, TG = 0.14, BP = 0.26;
+                            var h   = IMG_H + BG + BH + DG + DH + TG + th + GAP + dh + BP;
+                            var topY = h / 2;
 
-                        if (titleEl) titleEl.setAttribute('position', '0 ' + titleY.toFixed(3) + ' 0.06');
-                        if (descEl)  descEl.setAttribute('position',  '0 ' + (titleY - th - GAP).toFixed(3) + ' 0.06');
+                            var imgCY   = topY - IMG_H / 2;
+                            var badgeCY = topY - IMG_H - BG - BH / 2;
+                            var divCY   = topY - IMG_H - BG - BH - DG - DH / 2;
+                            var titlePY = topY - IMG_H - BG - BH - DG - DH - TG;
+                            var descPY  = titlePY - th - GAP;
 
-                        panel.appendChild(mkPlane('#000000', (w+0.30).toFixed(2), (h+0.30).toFixed(2), '0.10','-0.10','-0.05','0.30',true));
-                        panel.appendChild(mkPlane('#E3173E', (w+0.16).toFixed(2), (h+0.16).toFixed(2), '0','0','-0.02','1',false));
-                        panel.appendChild(mkPlane('#FFFFFF', w, h.toFixed(2), '0','0','-0.01','1',false));
+                            // Sombra redondeada
+                            var shadowEl = document.createElement('a-entity');
+                            shadowEl.setAttribute('geometry', 'primitive: rounded-rect; width: ' + (w+0.28).toFixed(2) + '; height: ' + (h+0.28).toFixed(2) + '; radius: 0.14');
+                            shadowEl.setAttribute('material', 'color: #000000; opacity: 0.26; transparent: true');
+                            shadowEl.setAttribute('position', '0.09 -0.09 -0.06');
+                            panel.appendChild(shadowEl);
 
-                        var closeBtn = panel.querySelector('.close-btn');
-                        if (closeBtn) closeBtn.setAttribute('position',
-                            (w/2+0.10).toFixed(2) + ' ' + (h/2+0.10).toFixed(2) + ' 0.04');
+                            // Fondo blanco con esquinas redondeadas
+                            var bgEl = document.createElement('a-entity');
+                            bgEl.setAttribute('geometry', 'primitive: rounded-rect; width: ' + w.toFixed(2) + '; height: ' + h.toFixed(2) + '; radius: 0.12');
+                            bgEl.setAttribute('material', 'color: #FFFFFF; opacity: 1');
+                            bgEl.setAttribute('position', '0 0 -0.01');
+                            panel.appendChild(bgEl);
+
+                            // Imagen superior (esquinas superiores redondeadas)
+                            imgEl.setAttribute('position', '0 ' + imgCY.toFixed(3) + ' 0.03');
+                            panel.appendChild(imgEl);
+
+                            // Badge (fondo rosa claro + texto rojo)
+                            var bW = Math.min(titleTextValue.length * 0.092 + 0.30, 2.8);
+                            var bX = (-w / 2 + bW / 2 + 0.22).toFixed(3);
+                            var bY = badgeCY.toFixed(3);
+                            var badge = document.createElement('a-entity');
+                            badge.setAttribute('geometry', 'primitive: rounded-rect; width:' + bW.toFixed(2) + '; height:' + BH.toFixed(2) + '; radius:0.07');
+                            badge.setAttribute('material', 'color: #fde8ec; opacity: 1');
+                            badge.setAttribute('position', bX + ' ' + bY + ' 0.02');
+                            panel.appendChild(badge);
+
+                            var badgeTxt = document.createElement('a-entity');
+                            badgeTxt.setAttribute('troika-text', {
+                                value: titleTextValue, color: '#E3173E',
+                                fontSize: 0.088, maxWidth: bW - 0.12,
+                                textAlign: 'center', anchorX: 'center', anchorY: 'middle',
+                                fontWeight: 'bold', letterSpacing: 0.06
+                            });
+                            badgeTxt.setAttribute('position', bX + ' ' + bY + ' 0.04');
+                            panel.appendChild(badgeTxt);
+
+                            // Línea divisora roja (izquierda → derecha degradando)
+                            panel.appendChild(mkPlane('#E3173E', (w - 0.44).toFixed(2), DH.toFixed(3),
+                                (-0.22).toFixed(2), divCY.toFixed(3), '0.02', '1', false));
+
+                            // Textos
+                            if (titleEl) titleEl.setAttribute('position', '0 ' + titlePY.toFixed(3) + ' 0.06');
+                            if (descEl)  descEl.setAttribute('position',  '0 ' + descPY.toFixed(3)  + ' 0.06');
+
+                            // Botón cerrar (gris oscuro sobre la imagen)
+                            var closeBtn = panel.querySelector('.close-btn');
+                            if (closeBtn) {
+                                closeBtn.setAttribute('position', (w/2 - 0.22).toFixed(2) + ' ' + (topY - 0.22).toFixed(2) + ' 0.05');
+                                closeBtn.setAttribute('color', '#3a3a3a');
+                                closeBtn.setAttribute('opacity', '0.82');
+                                closeBtn.setAttribute('width', '0.32');
+                                closeBtn.setAttribute('height', '0.32');
+                                var cbTxt = closeBtn.querySelector('a-text');
+                                if (cbTxt) { cbTxt.setAttribute('color', '#FFFFFF'); cbTxt.setAttribute('width', '5'); }
+                            }
+
+                        } else {
+                            /* ── CARD ESTÁNDAR ── */
+                            var imgOffset = imgEl ? IMG_H : 0;
+                            var contentH  = th + (dh > 0 ? GAP + dh : 0);
+                            var h = imgOffset + contentH + PAD_V * 2;
+                            var titleY = h / 2 - imgOffset - PAD_V;
+
+                            if (titleEl) titleEl.setAttribute('position', '0 ' + titleY.toFixed(3) + ' 0.06');
+                            if (descEl)  descEl.setAttribute('position',  '0 ' + (titleY - th - GAP).toFixed(3) + ' 0.06');
+
+                            panel.appendChild(mkPlane('#000000', (w+0.30).toFixed(2), (h+0.30).toFixed(2), '0.10','-0.10','-0.05','0.30',true));
+                            panel.appendChild(mkPlane('#E3173E', (w+0.16).toFixed(2), (h+0.16).toFixed(2), '0','0','-0.02','1',false));
+                            panel.appendChild(mkPlane('#FFFFFF', w, h.toFixed(2), '0','0','-0.01','1',false));
+
+                            if (imgEl) {
+                                imgEl.setAttribute('position', '0 ' + (h / 2 - IMG_H / 2).toFixed(3) + ' 0.03');
+                                panel.appendChild(imgEl);
+                            }
+
+                            var closeBtn = panel.querySelector('.close-btn');
+                            if (closeBtn) closeBtn.setAttribute('position',
+                                (w/2+0.10).toFixed(2) + ' ' + (h/2+0.10).toFixed(2) + ' 0.04');
+                        }
                     }
                     requestAnimationFrame(build);
                 }, 0);
@@ -1294,6 +1408,12 @@
                 desc: 'Bienvenidos a una de las instituciones de educación superior en negocios más prestigiosas de América Latina.',
                 image: 'imagenes/entrada esan.jpg',
                 scene: 'ENTRADA PRINCIPAL'
+            },
+            'panel-info-fuera': {
+                title: 'EXTERIOR ESAN',
+                desc: 'Amplias áreas verdes y zonas de tránsito que destacan nuestra moderna arquitectura.',
+                image: 'imagenes/fuera de esan.jpg',
+                scene: 'EXTERIOR ESAN'
             }
         };
 
@@ -2808,7 +2928,7 @@
             <a-image src="#img-info-icon" position="5 2.5 -8" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="icono-hotspot" hotspot-info="target: #panel-info-fuera; action: toggle">
             </a-image>
-            <a-entity id="panel-info-fuera" visible="false" smooth-follow card-style scale="1 1 1">
+            <a-entity id="panel-info-fuera" visible="false" smooth-follow card-style scale="1 1 1" data-card-img="imagenes/fuera de esan.jpg" data-premium="true">
                 <a-plane color="#FFFFFF" opacity="0.95" width="4" height="1.6" position="0 0 0"></a-plane>
                 <a-text value="EXTERIOR ESAN" color="#E3173E" align="center" width="7" position="0 1.25 0.01"></a-text>
                 <a-text
