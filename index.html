@@ -755,11 +755,11 @@
             'explanada': {
                 imagen: 'imagenes/convention.jpg', rotacionSky: '0 -90 0',
                 flechas: [
-                    { target: 'basquet', position: '-13 -1 15', rotation: '0 -20 0' },
-                    { target: 'eventos', position: '-23 -1 2', rotation: '0 -60 0' },
-                    { target: 'ecoesan', position: '10 -1 -18', rotation: '0 156 0', imgSrc: '#img-flecha-derecha' },
-                    { target: 'estudio_mba', position: '-2.10 1.72 -11.69', rotation: '0 -170 0' },
-                    { target: 'fisica', position: '3.07 1.13 11.55', rotation: '0 15 0' }
+                    { target: 'basquet', position: '1.78 -1 -11.87', rotation: '0 -20 0' },
+                    { target: 'eventos', position: '8.54 -1 -8.43', rotation: '0 -60 0' },
+                    { target: 'ecoesan', position: '10.87 2 5.08', rotation: '0 156 0', imgSrc: '#img-flecha-derecha' },
+                    { target: 'estudio_mba', position: '11.56 0.5 3.21', rotation: '0 -170 0' },
+                    { target: 'fisica', position: '-11.59 2 -3.10', rotation: '0 15 0' }
                 ]
             },
             'ecoesan': {
@@ -1731,7 +1731,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-image src="#img-info-icon" position="-8.95 4.85 -6.36" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="-8.95 3.20 -6.36" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-admin-fuente; action: toggle">
             </a-image>
 
@@ -2114,7 +2114,7 @@
         </a-entity>
 
         <a-entity id="hotspots-explanada" class="grupo-hotspots" visible="false">
-            <a-image src="#img-info-icon" position="-3.24 3.74 -10.54" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="11.56 3.5 3.21" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-explanada; action: toggle">
             </a-image>
 
@@ -2134,7 +2134,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-image src="#img-info-icon" position="-5.78 7.24 7.63" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="0.79 2 -11.97" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-convention-explanada; action: toggle">
             </a-image>
 
@@ -2154,7 +2154,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-image src="#img-info-icon" position="1.91 4.23 11.07" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="-11.49 2 -3.47" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-lab-fisica-quimica; action: toggle">
             </a-image>
 
@@ -2174,45 +2174,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-image src="#img-info-icon" position="6.55 4.11 -9.17" scale="0.8 0.8 0.8" look-at="[camera]"
-                class="clickable icono-hotspot"
-                hotspot-info="target: #panel-info-edificio-aulas-convention; action: toggle">
-            </a-image>
 
-            <a-entity id="panel-info-edificio-aulas-convention" visible="false" smooth-follow card-style scale="1 1 1" data-card-img="imagenes/Fotos/postgradoF.jpg" data-premium="true">
-                <a-plane color="#FFFFFF" opacity="0.95" width="4" height="1.6" position="0 0 0"></a-plane>
-
-                <a-text value="EDIFICIO ACADÉMICO" color="#E3173E" align="center" width="7"
-                    position="0 1.25 0.01"></a-text>
-
-                <a-text
-                    value="Aulas modernas equipadas para el análisis de casos y el desarrollo de clases dinámicas."
-                    color="#333333" align="center" width="3.5" position="0 -0.15 0.01" wrap-count="35"></a-text>
-
-                <a-plane class="clickable close-btn" color="#FF0000" width="0.4" height="0.4" position="1.75 1.3 0.02"
-                    hotspot-info="target: #panel-info-edificio-aulas-convention; action: close">
-                    <a-text value="X" color="#FFFFFF" align="center" width="6" position="0 0 0.01"></a-text>
-                </a-plane>
-            </a-entity>
-
-            <a-image src="#img-info-icon" position="9.43 5.65 -4.82" scale="0.8 0.8 0.8" look-at="[camera]"
-                class="clickable icono-hotspot" hotspot-info="target: #panel-info-edificio-d; action: toggle">
-            </a-image>
-
-            <a-entity id="panel-info-edificio-d" visible="false" smooth-follow card-style scale="1 1 1" data-card-img="imagenes/Fotos/edificioDF.webp" data-premium="true">
-                <a-plane color="#FFFFFF" opacity="0.95" width="4" height="1.6" position="0 0 0"></a-plane>
-
-                <a-text value="EDIFICIO D" color="#E3173E" align="center" width="7" position="0 1.25 0.01"></a-text>
-
-                <a-text
-                    value="Conecta el aprendizaje de pregrado con las oficinas docentes y de gestión institucional."
-                    color="#333333" align="center" width="3.5" position="0 -0.15 0.01" wrap-count="35"></a-text>
-
-                <a-plane class="clickable close-btn" color="#FF0000" width="0.4" height="0.4" position="1.75 1.3 0.02"
-                    hotspot-info="target: #panel-info-edificio-d; action: close">
-                    <a-text value="X" color="#FFFFFF" align="center" width="6" position="0 0 0.01"></a-text>
-                </a-plane>
-            </a-entity>
         </a-entity>
 
         <a-entity id="hotspots-eventos" class="grupo-hotspots" visible="false">
