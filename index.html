@@ -703,7 +703,7 @@
                 rotacionSky: '0 90 0',
                 flechas: [
                     { target: 'jardin', position: '1.42 2 8.15', rotation: '0 -155 0' },
-                    { target: 'fuera', position: '-7.22 2 -9.59', rotation: '0 0 0' }
+                    { target: 'fuera', position: '-7.22 -1 -9.59', rotation: '0 0 0' }
                 ]
             },
             'jardin': {
@@ -719,7 +719,7 @@
                 flechas: [
                     { target: 'fablab', position: '19.73 -1 3.25', rotation: '0 110 0' },
                     { target: 'jardin', position: '-19.29 -1 5.26', rotation: '0 -75 0' },
-                    { target: 'quimica', position: '-1.20 3.29 11.48', rotation: '0 -116 0' }
+                    { target: 'quimica', position: '-1.20 3.29 11.48', rotation: '0 -206 0', imgSrc: '#img-flecha-izquierda' }
                 ]
             },
             'fablab': {
@@ -734,7 +734,7 @@
             'fablab2': {
                 imagen: 'imagenes/fablab%202.jpg', rotacionSky: '0 0 0',
                 flechas: [
-                    { target: 'fablab', position: '0 -1 -10', rotation: '0 0 0' }
+                    { target: 'fablab', position: '0 -1 -10', rotation: '0 90 0', imgSrc: '#img-flecha-derecha' }
                 ]
             },
             'voley': {
@@ -883,7 +883,7 @@
             'estudio_mba': {
                 imagen: 'imagenes/salas%20de%20estudio%20mba.jpg', rotacionSky: '0 180 0',
                 flechas: [
-                    { target: 'estudio_magister', position: '8.76 2.8 8.18', rotation: '0 0 0' },
+                    { target: 'estudio_magister', position: '8.76 2.8 8.18', rotation: '0 0 0', imgSrc: '#img-flecha-abajo' },
                     { target: 'descanso_magister', position: '1.14 2.8 11.94', rotation: '0 -176 0' }
                 ]
             },
@@ -892,14 +892,14 @@
                 flechas: [
                     { target: 'descanso_magister', position: '5.85 2.8 -11.35', rotation: '0 -195 0' },
                     { target: 'estudio_mba', position: '9.38 4.29 -6.13', rotation: '0 33 0' },
-                    { target: 'estudio_pregrado', position: '10.09 0 -6.16', rotation: '0 334 0' },
+                    { target: 'estudio_pregrado', position: '10.09 0 -6.16', rotation: '0 334 0', imgSrc: '#img-flecha-izquierda' },
                     { target: 'cafeteria', position: '8.83 0 7.49', rotation: '0 139 0' }
                 ]
             },
             'descanso_magister': {
                 imagen: 'imagenes/sala%20de%20descanso%20magister.jpg', rotacionSky: '0 0 0',
                 flechas: [
-                    { target: 'estudio_magister', position: '9.10 2.8 -7.80', rotation: '0 0 0' },
+                    { target: 'estudio_magister', position: '11.80 2 -2.17', rotation: '0 0 0' },
                     { target: 'estudio_mba', position: '8.22 2.8 -8.72', rotation: '0 137 0' }
                 ]
             },
@@ -1754,7 +1754,7 @@
 
 
 
-            <a-image src="#img-info-icon" position="-8.44 0.34 8.52" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="7.08 3.5 9.69" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-descanso-fuente; action: toggle">
             </a-image>
 
@@ -1992,7 +1992,7 @@
             </a-entity>
 
 
-            <a-image src="#img-info-icon" position="3.82 2.50 10.27" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="3.82 4.00 10.27" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-fablab-voley; action: toggle">
             </a-image>
 
@@ -2095,7 +2095,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-image src="#img-info-icon" position="0.79 5.00 -11.97" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="0.79 6.50 -11.97" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-convention-explanada; action: toggle">
             </a-image>
 
@@ -2661,21 +2661,6 @@
         </a-entity>
 
         <a-entity id="hotspots-descanso_magister" class="grupo-hotspots" visible="false">
-            <a-image src="#img-info-icon" position="5 2.5 -8" scale="0.8 0.8 0.8" look-at="[camera]"
-                class="icono-hotspot" hotspot-info="target: #panel-info-descanso_magister; action: toggle">
-            </a-image>
-            <a-entity id="panel-info-descanso_magister" visible="false" smooth-follow card-style scale="1 1 1" data-card-img="imagenes/Fotos/areaDescansoF.webp" data-premium="true">
-                <a-plane color="#FFFFFF" opacity="0.95" width="4" height="1.6" position="0 0 0"></a-plane>
-                <a-text value="SALA DE DESCANSO MAGÍSTER" color="#E3173E" align="center" width="7"
-                    position="0 1.25 0.01"></a-text>
-                <a-text
-                    value="Zona tranquila pensada para el bienestar y relax entre largas jornadas académicas."
-                    color="#333333" align="center" width="3.5" position="0 -0.15 0.01" wrap-count="35"></a-text>
-                <a-plane class="clickable close-btn" color="#FF0000" width="0.4" height="0.4" position="1.75 1.3 0.02"
-                    hotspot-info="target: #panel-info-descanso_magister; action: close">
-                    <a-text value="X" color="#FFFFFF" align="center" width="6" position="0 0 0.01"></a-text>
-                </a-plane>
-            </a-entity>
         </a-entity>
 
         <a-entity id="hotspots-cafeteria_interior" class="grupo-hotspots" visible="false">
